@@ -5,6 +5,9 @@
 #include <v8-external.h>
 #include <v8-function.h>
 
+// whatever...
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+
 JavaScriptVM::JavaScriptVM() {
 	// V8
 	this->createParams.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
@@ -120,9 +123,37 @@ ScriptStatus_t JavaScriptVM::ExecuteFunction(HSCRIPT hFunction, ScriptVariant_t*
 
 static void TranslateCall(const v8::FunctionCallbackInfo<v8::Value>& info) {
 	auto isolate = info.GetIsolate();
-	auto pScriptFunction = static_cast<ScriptFunctionBinding_t*>(v8::Local<v8::External>::Cast(info.Data())->Value());
-	if(pScriptFunction->descriptor.arguments.elements)
-	DEV("TranslateCall %s\n", pScriptFunction->descriptor.functionName);
+
+	auto scriptFunction = static_cast<ScriptFunctionBinding_t*>(v8::Local<v8::External>::Cast(info.Data())->Value());
+	int expectedParameterCount = scriptFunction->descriptor.parameters.Count();
+	int providedParameterCount = info.Length();
+
+	std::vector<ScriptVariant_t> parameters;
+	parameters.reserve(expectedParameterCount);
+	
+	if(expectedParameterCount) {
+		int parameterCount = MIN(expectedParameterCount, providedParameterCount);
+		for(int i = 0; i < parameterCount; i++) {
+			auto parameter = info[i];
+			auto parameterType = scriptFunction->descriptor.parameters[i];
+			switch(parameterType) {
+			case FIELD_CSTRING:
+				v8::String::Utf8Value value(isolate, parameter);
+				ScriptVariant_t variant;
+				variant.stringValue = *value;
+				parameters.push_back(variant);
+			}
+		}
+	}
+
+	for(auto p : parameters) {
+		DEV("%s\n", p.stringValue);
+	}
+
+	ScriptVariant_t returnValue;
+	scriptFunction->binding(scriptFunction->function, nullptr, parameters.data(), parameters.size(), scriptFunction->descriptor.returnType != FIELD_VOID ? &returnValue : nullptr);
+
+	//DEV("TranslateCall %s\n", scriptFunction->descriptor.functionName);
 }
 
 void JavaScriptVM::RegisterFunction(ScriptFunctionBinding_t* pScriptFunction) {

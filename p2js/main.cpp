@@ -6,7 +6,8 @@
 #include <libplatform/libplatform.h>
 
 void Main::Initialize() {
-	auto exe = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Portal 2\\portal2.exe";
+	char exe[MAX_PATH];
+	GetModuleFileNameA(GetModuleHandleA(nullptr), exe, sizeof(exe));
 	v8::V8::InitializeICUDefaultLocation(exe);
 	v8::V8::InitializeExternalStartupData(exe);
 	this->platform = v8::platform::NewDefaultPlatform();

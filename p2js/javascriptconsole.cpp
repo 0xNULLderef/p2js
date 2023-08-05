@@ -1,9 +1,5 @@
 #include "javascriptconsole.hpp"
 
-JavaScriptConsole::JavaScriptConsole(v8::Isolate* isolate) {
-	this->isolate = isolate;
-}
-
 void JavaScriptConsole::Debug(const v8::debug::ConsoleCallArguments& args, const v8::debug::ConsoleContext& context) {
 	DEV("%s", this->TranslateArgs(args).c_str());
 }

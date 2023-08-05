@@ -11,8 +11,6 @@
 
 #define LOG(...) Logger::Instance()->Log(__VA_ARGS__)
 
-// JANK:
-// WHYYY can't i just macro the 3 args as a triplet and have them expand correctly????
 #define LOG_COLOR Color(174, 108, 245)
 
 #if 1

@@ -36,12 +36,82 @@ struct ScriptVariant_t {
 	};
 };
 
-typedef int ScriptDataType_t;
+//typedef int ScriptDataType_t;
 
-template<typename T> struct CUtlVector {
-	void* allocator;
+enum ScriptDataType_t : int {
+	FIELD_VOID = 0,
+	FIELD_FLOAT = 1,
+	FIELD_VECTOR = 3,
+	FIELD_INTEGER = 5,
+	FIELD_BOOLEAN = 6,
+	FIELD_CHARACTER = 8,
+	FIELD_CSTRING = 32,
+	FIELD_HSCRIPT = 33
+};
+
+template<typename T, size_t Size> class CUtlMemoryFixed {
+public:
+	CUtlMemoryFixed() : memory() { }
+
+	inline T& operator[](int i) {
+		return this->memory[i];
+	}
+
+	inline T* Base() {
+		return this->memory;
+	}
+
+private:
+	T memory[Size];
+};
+
+template<typename T> class CUtlMemory {
+public:
+	CUtlMemory() : memory(nullptr), allocationCount(0), growSize(0) { }
+
+	inline T& operator[](int i) {
+		return this->memory[i];
+	}
+
+	inline T* Base() {
+		return this->memory;
+	}
+
+private:
+	T* memory;
+	int allocationCount;
+	int growSize;
+};
+
+template<typename T, class A = CUtlMemory<T>> class CUtlVector {
+public:
+	CUtlVector() : memory(), size(0), elements(nullptr) {}
+
+	inline void SetSize(int size) {
+		this->size = size;
+	}
+
+	inline int Count() {
+		return this->size;
+	}
+
+	inline T* Base() {
+		return this->memory.Base();
+	}
+
+	inline T& operator[](int i) {
+		return this->memory[i];
+	}
+
+private:
+	A memory;
 	int size;
 	T* elements;
+};
+
+template<typename T, size_t Size> class CUtlVectorFixed : public CUtlVector<T, CUtlMemoryFixed<T, Size>> {
+public:
+	CUtlVectorFixed() : CUtlVector<T, CUtlMemoryFixed<T, Size>>() { }
 };
 
 struct ScriptFuncDescriptor_t {
@@ -49,11 +119,11 @@ struct ScriptFuncDescriptor_t {
 	const char* functionName;
 	const char* description;
 	ScriptDataType_t returnType;
-	CUtlVector<ScriptDataType_t> arguments;
+	CUtlVector<ScriptDataType_t> parameters;
 };
 
 typedef void* ScriptFunctionBindingStorageType_t;
-typedef bool (*ScriptBindingFunc_t)(ScriptFunctionBindingStorageType_t function, void* context, ScriptVariant_t* arguments, int argumentCount, ScriptVariant_t* returnValue);
+typedef bool (*ScriptBindingFunc_t)(ScriptFunctionBindingStorageType_t function, void* context, ScriptVariant_t* parameters, int parameterCount, ScriptVariant_t* returnValue);
 
 struct ScriptFunctionBinding_t {
 	ScriptFuncDescriptor_t descriptor;
@@ -93,7 +163,6 @@ struct ScriptClassDesc_t {
 };
 
 typedef void CUtlBuffer;
-
 
 enum ScriptErrorLevel_t {
 	SCRIPT_LEVEL_WARNING = 0,
