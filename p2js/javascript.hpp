@@ -3,6 +3,7 @@
 #include "vscript.hpp"
 
 #include "javascriptconsole.hpp"
+#include <v8-exception.h>
 
 class JavaScriptVM : public IScriptVM {
 public:
@@ -50,6 +51,7 @@ public:
 	void SetOutputCallback(ScriptOutputFunc_t pFunc);
 	void SetErrorCallback(ScriptErrorFunc_t pFunc);
 	bool RaiseException(const char* pszExceptionText);
+	void ReportException(v8::TryCatch* tryCatch);
 
 private:
 	// V8

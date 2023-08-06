@@ -66,6 +66,25 @@ bool JavaScriptVM::Frame(float simTime) {
 	return false;
 }
 
+void JavaScriptVM::ReportException(v8::TryCatch* tryCatch) {
+	v8::HandleScope handleScope(this->isolate);
+	v8::String::Utf8Value exception(isolate, tryCatch->Exception());
+	const char* exceptionString = *exception;
+	auto message = tryCatch->Message();
+	if(message.IsEmpty()) {
+		ERROR("%s\n", exceptionString);
+	} else {
+		v8::String::Utf8Value filename(this->isolate, message->GetScriptOrigin().ResourceName());
+		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(this->isolate, this->globalContext);
+		const char* filenameString = *filename;
+		int linenum = message->GetLineNumber(context).FromJust();
+		ERROR("%s:%i: %s\n", filenameString, linenum, exceptionString);
+		v8::String::Utf8Value sourceline(isolate, message->GetSourceLine(context).ToLocalChecked());
+		const char* sourcelineString = *sourceline;
+		ERROR("%s\n", sourcelineString);
+	}
+}
+
 ScriptStatus_t JavaScriptVM::Run(const char* pszScript, bool bWait) {
 	v8::HandleScope handleScope(this->isolate);
 	v8::Local<v8::Context> context = v8::Local<v8::Context>::New(this->isolate, this->globalContext);
@@ -73,13 +92,22 @@ ScriptStatus_t JavaScriptVM::Run(const char* pszScript, bool bWait) {
 
 	auto source = v8::String::NewFromUtf8(this->isolate, pszScript).ToLocalChecked();
 	v8::Local<v8::Script> script;
-	if(!v8::Script::Compile(context, source).ToLocal(&script)) return SCRIPT_ERROR;
-	script->Run(context).ToLocalChecked();
+	v8::TryCatch tryCatch(isolate);
+	if(!v8::Script::Compile(context, source).ToLocal(&script)) {
+		ReportException(&tryCatch);
+		return SCRIPT_ERROR;
+	} else {
+		script->Run(context);
+		if(tryCatch.HasCaught()) {
+			ReportException(&tryCatch);
+			return SCRIPT_ERROR;
+		}
+	}
 
 	return SCRIPT_DONE;
 }
 
-ScriptStatus_t JavaScriptVM::Run(HSCRIPT hScript, HSCRIPT hScope, bool bWai) {
+ScriptStatus_t JavaScriptVM::Run(HSCRIPT hScript, HSCRIPT hScope, bool bWait) {
 	DEV("STUB : %d\n", __LINE__);
 	return SCRIPT_ERROR;
 }

@@ -37,7 +37,6 @@ public:
 	}
 
 	template<typename HookStruct> void Hook() {
-		DEV("[Detour] Hooking address %p\n", this->target);
 		MH_CreateHook(this->target, reinterpret_cast<void*>(&HookStruct::Callback), reinterpret_cast<void**>(&HookStruct::Original));
 		MH_QueueEnableHook(this->target);
 		this->addresses.push_back(this->target);
@@ -45,7 +44,6 @@ public:
 
 	template<typename HookStruct> void Hook(int vmtIndex) {
 		auto address = (*reinterpret_cast<void***>(this->target))[vmtIndex];
-		DEV("[Detour] Hooking VMT %p[%d] -> %p\n", this->target, vmtIndex, address);
 		MH_CreateHook(address, reinterpret_cast<void*>(&HookStruct::Callback), reinterpret_cast<void**>(&HookStruct::Original));
 		MH_QueueEnableHook(address);
 		this->addresses.push_back(address);

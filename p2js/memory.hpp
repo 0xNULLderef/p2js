@@ -4,24 +4,28 @@
 #include "logger.hpp"
 #include <string>
 #include <functional>
+#include <Windows.h>
+#include <Psapi.h>
+#include <span>
+#include <sstream>
+
+class Scanner {
+public:
+	virtual uint8_t* Scan(std::span<uint8_t> region, std::pair<const std::vector<uint8_t>, const std::vector<uint8_t>> signature) = 0;
+};
 
 class Memory : public Singleton<Memory> {
 public:
-	// REQUIRES the signature to NOT start and end with a wildcard character
-	template<typename T> void Scan(std::string moduleName, std::string signatureString, std::function<void(T)> callback) {
-		try {
-			auto matchAddress = this->ScanInternal(moduleName, signatureString);
-			if(matchAddress != nullptr) {
-				callback(reinterpret_cast<T>(matchAddress));
-			}
-		} catch(std::exception& ex) {
-			WARNING("Failed to match signature %s in %s (%s)\n", signatureString.c_str(), moduleName.c_str(), ex.what());
-		}
-	}
+	Memory();
+	~Memory();
 
+	// REQUIRES the signature to NOT start and end with a wildcard character
 	template<typename T> void Scan(std::string moduleName, std::string signatureString, int offset, std::function<void(T)> callback) {
 		try {
-			const auto matchAddress = this->ScanInternal(moduleName, signatureString);
+			const auto matchAddress = this->scanner->Scan(
+				this->GetModuleSpan(moduleName),
+				this->PrepareSignature(signatureString)
+			);
 			if(matchAddress != nullptr) {
 				callback(reinterpret_cast<T>(reinterpret_cast<uintptr_t>(matchAddress) + offset));
 			}
@@ -41,6 +45,10 @@ public:
 		}
 	}
 
+	const std::span<uint8_t> GetModuleSpan(std::string moduleName);
+
+	const std::pair<const std::vector<uint8_t>, const std::vector<uint8_t>> PrepareSignature(std::string signatureString);
+
 private:
-	uint8_t* ScanInternal(std::string moduleName, std::string signatureString);
+	Scanner* scanner;
 };
