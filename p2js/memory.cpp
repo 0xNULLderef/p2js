@@ -5,6 +5,11 @@
 #include <algorithm>
 #include <bit>
 
+#ifndef _WIN32
+#include <link.h>
+#include <cstring>
+#endif
+
 template<size_t StartOffset, size_t EndOffset> inline bool MaskedCompare(std::span<uint8_t> block, std::vector<uint8_t> pattern, std::vector<uint8_t> mask) {
 	const auto blockSize = block.size();
 	if(blockSize != pattern.size() || blockSize != mask.size()) {
@@ -136,6 +141,7 @@ template<unsigned int Function, unsigned int Register, unsigned int Bit> inline 
 }
 
 const std::span<uint8_t> Memory::GetModuleSpan(std::string moduleName) {
+#ifdef _WIN32
 	auto moduleHandle = GetModuleHandleA(moduleName.c_str());
 	if(!moduleHandle) { 
 		throw std::runtime_error("Failed to get module handle");
@@ -145,6 +151,9 @@ const std::span<uint8_t> Memory::GetModuleSpan(std::string moduleName) {
 		throw std::runtime_error("Failed to get module span");
 	}
 	return { reinterpret_cast<uint8_t*>(moduleInfo.lpBaseOfDll), static_cast<size_t>(moduleInfo.SizeOfImage) };
+#else
+	return Memory::moduleSpans.find(moduleName)->second;
+#endif
 }
 
 const std::pair<const std::vector<uint8_t>, const std::vector<uint8_t>> Memory::PrepareSignature(std::string signatureString) {
@@ -180,6 +189,33 @@ Memory::Memory() {
 		WARNING("Using SSE Scanner, may be slow!\n");
 		this->scanner = new GenericScanner;
 	}
+
+#ifdef _WIN32
+#else
+	dl_iterate_phdr([](struct dl_phdr_info* info, size_t, void*) {
+		auto name = info->dlpi_name;
+		auto afterLastSlash = strrchr(name, '/');
+		if(afterLastSlash) {
+			auto afterFirstDot = strchr(afterLastSlash, '.');
+			if(afterFirstDot) {
+				for(size_t i = 0; i < info->dlpi_phnum; i++) {
+					if(info->dlpi_phdr[i].p_flags & 1) {
+						Memory::moduleSpans.insert({
+							std::string(name).substr(static_cast<size_t>(afterLastSlash - name) + 1, static_cast<size_t>(afterFirstDot - name) - 1),
+							{
+								reinterpret_cast<uint8_t*>(info->dlpi_addr + info->dlpi_phdr[i].p_vaddr),
+								info->dlpi_phdr[i].p_memsz
+							}
+						});
+						break;
+					}
+				}
+			}
+			
+		}
+		return 0;
+	}, nullptr);
+#endif
 }
 
 Memory::~Memory() {

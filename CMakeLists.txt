@@ -13,15 +13,13 @@ set(V8_INCLUDE
 	"${CMAKE_SOURCE_DIR}/../v8/include"
 )
 
-set(V8_LIB
-	"${CMAKE_SOURCE_DIR}/../v8/out/"
-)
-
-add_library(v8 STATIC IMPORTED)
-set_target_properties(v8 PROPERTIES
-	IMPORTED_LOCATION "${V8_LIB}"
-	INTERFACE_INCLUDE_DIRECTORIES "${V8_INCLUDE}"
-)
+add_library(v8_base STATIC IMPORTED)
+set_target_properties(v8_base PROPERTIES IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/../v8/out/ia32.release/obj/libv8_base_without_compiler.a")
+set_target_properties(v8_base PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${V8_INCLUDE}")
+add_library(v8_libbase STATIC IMPORTED)
+set_target_properties(v8_libbase PROPERTIES IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/../v8/out/ia32.release/obj/libv8_libbase.a")
+add_library(wee8 STATIC IMPORTED)
+set_target_properties(wee8 PROPERTIES IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/../v8/out/ia32.release/obj/libwee8.a")
 
 set(SOURCES_P2JS
 	"p2js/hooks.cpp"
@@ -34,6 +32,6 @@ set(SOURCES_P2JS
 )
 
 add_library(p2js SHARED ${SOURCES_P2JS})
-set_target_properties(p2js PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-target_link_libraries(p2js subhook v8)
+set_target_properties(p2js PROPERTIES COMPILE_FLAGS "-m32 -march=native" LINK_FLAGS "-m32")
+target_link_libraries(p2js subhook v8_base v8_libbase wee8)
 

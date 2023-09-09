@@ -99,7 +99,12 @@ void Plugin::OnQueryCvarValueFinished(int iCookie, void* pPlayerEntity, int eSta
 void Plugin::OnEdictAllocated(void* edict) { }
 void Plugin::OnEdictFreed(const void* edict) { }
 
-extern "C" __declspec(dllexport) void* CreateInterface(const char* pName, int* pReturnCode) {
+#ifdef _WIN32
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+extern "C" EXPORT void* CreateInterface(const char* pName, int* pReturnCode) {
 	if(strcmp(pName, "ISERVERPLUGINCALLBACKS002") == 0) {
 		if(pReturnCode != nullptr) *pReturnCode = 0;
 		return reinterpret_cast<void*>(Plugin::Instance());

@@ -9,6 +9,7 @@
 #include <Psapi.h>
 #else
 #include <dlfcn.h>
+#include <unordered_map>
 #endif
 #include <span>
 #include <sstream>
@@ -58,6 +59,10 @@ public:
 	const std::span<uint8_t> GetModuleSpan(std::string moduleName);
 
 	const std::pair<const std::vector<uint8_t>, const std::vector<uint8_t>> PrepareSignature(std::string signatureString);
+
+#ifndef _WIN32
+	static std::unordered_map<std::string, std::span<uint8_t>> moduleSpans;
+#endif
 
 private:
 	Scanner* scanner;
