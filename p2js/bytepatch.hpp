@@ -15,6 +15,17 @@ public:
 		VirtualProtect(this->target, this->size, protect, &dummy);
 	}
 
+	template<typename T> BytePatch(void* target, T value) : target(target) {
+		this->size = sizeof(T);
+		this->original.reserve(this->size);
+		std::memcpy(this->original.data(), this->target, this->size);
+		DWORD protect;
+		VirtualProtect(this->target, this->size, PAGE_EXECUTE_READWRITE, &protect);
+		std::memcpy(this->target, &value, this->size);
+		DWORD dummy;
+		VirtualProtect(this->target, this->size, protect, &dummy);
+	}
+
 	~BytePatch() {
 		DWORD protect;
 		VirtualProtect(this->target, this->size, PAGE_EXECUTE_READWRITE, &protect);

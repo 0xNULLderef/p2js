@@ -3,6 +3,7 @@
 #include <immintrin.h>
 #include <vector>
 #include <algorithm>
+#include <bit>
 
 template<size_t StartOffset, size_t EndOffset> inline bool MaskedCompare(std::span<uint8_t> block, std::vector<uint8_t> pattern, std::vector<uint8_t> mask) {
 	const auto blockSize = block.size();
@@ -130,7 +131,7 @@ const std::span<uint8_t> Memory::GetModuleSpan(std::string moduleName) {
 		throw std::runtime_error("Failed to get module handle");
 	}
 	MODULEINFO moduleInfo = { };
-	if(GetModuleInformation(GetCurrentProcess(), moduleHandle, &moduleInfo, sizeof(moduleInfo))) {
+	if(!GetModuleInformation(GetCurrentProcess(), moduleHandle, &moduleInfo, sizeof(moduleInfo))) {
 		throw std::runtime_error("Failed to get module span");
 	}
 	return { reinterpret_cast<uint8_t*>(moduleInfo.lpBaseOfDll), static_cast<size_t>(moduleInfo.SizeOfImage) };

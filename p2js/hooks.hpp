@@ -10,6 +10,7 @@ public:
 
 	HOOK_THISCALL(IScriptVM*, CreateVM, void*, void*, ScriptLanguage_t);
 	HOOK_THISCALL(void, DestroyVM, void*, void*, IScriptVM*);
+	HOOK_CDECL(HSCRIPT, VScriptCompileScript, const char*, bool);
 
 	std::vector<Patch*> patches;
 };

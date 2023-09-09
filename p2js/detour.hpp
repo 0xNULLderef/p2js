@@ -1,6 +1,7 @@
 #pragma once
 
-#include <MinHook.h>
+#define SUBHOOK_STATIC
+#include <subhook.h>
 #include <vector>
 #include "logger.hpp"
 #include "patch.hpp"
@@ -31,28 +32,27 @@ public:
 	Detour(void* target) : target(target) { }
 
 	~Detour() {
-		for(auto address : this->addresses) {
-			MH_RemoveHook(address);
+		for(auto hook : this->hooks) {
+			subhook_remove(hook);
+			subhook_free(hook);
 		}
 	}
 
 	template<typename HookStruct> void Hook() {
-		MH_CreateHook(this->target, reinterpret_cast<void*>(&HookStruct::Callback), reinterpret_cast<void**>(&HookStruct::Original));
-		MH_QueueEnableHook(this->target);
-		this->addresses.push_back(this->target);
+		auto hook = subhook_new(this->target, reinterpret_cast<void*>(&HookStruct::Callback), SUBHOOK_TRAMPOLINE);
+		subhook_install(hook);
+		*reinterpret_cast<void**>(&HookStruct::Original) = subhook_get_trampoline(hook);
+		this->hooks.push_back(hook);
 	}
 
 	template<typename HookStruct> void Hook(int vmtIndex) {
 		auto address = (*reinterpret_cast<void***>(this->target))[vmtIndex];
-		MH_CreateHook(address, reinterpret_cast<void*>(&HookStruct::Callback), reinterpret_cast<void**>(&HookStruct::Original));
-		MH_QueueEnableHook(address);
-		this->addresses.push_back(address);
-	}
-
-	void Apply() {
-		MH_ApplyQueued();
+		auto hook = subhook_new(address, reinterpret_cast<void*>(&HookStruct::Callback), SUBHOOK_TRAMPOLINE);
+		subhook_install(hook);
+		*reinterpret_cast<void**>(&HookStruct::Original) = subhook_get_trampoline(hook);
+		this->hooks.push_back(hook);
 	}
 
 	void* target;
-	std::vector<void*> addresses;
+	std::vector<subhook_t> hooks;
 };
