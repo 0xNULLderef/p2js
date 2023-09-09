@@ -1,3 +1,3 @@
-[submodule "minhook"]
-	path = minhook
-	url = https://github.com/TsudaKageyu/minhook
+[submodule "subhook"]
+	path = subhook
+	url = https://github.com/Zeex/subhook.git
