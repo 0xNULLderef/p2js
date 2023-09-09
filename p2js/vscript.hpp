@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 enum ScriptLanguage_t {
 	SL_NONE,
 	SL_GAMEMONKEY,

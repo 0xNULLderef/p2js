@@ -4,8 +4,12 @@
 #include "logger.hpp"
 #include <string>
 #include <functional>
+#ifdef _WIN32
 #include <Windows.h>
 #include <Psapi.h>
+#else
+#include <dlfcn.h>
+#endif
 #include <span>
 #include <sstream>
 
@@ -35,14 +39,20 @@ public:
 	}
 
 	template<typename T> inline void GetInterface(std::string moduleName, std::string interfaceName, std::function<void(T)> callback) {
+#ifdef _WIN32
 		auto moduleHandle = GetModuleHandleA(moduleName.c_str());
 		auto CreateInterface = reinterpret_cast<void*(*)(const char*, int*)>(GetProcAddress(moduleHandle, "CreateInterface"));
+#else
+		auto moduleHandle = dlopen(moduleName.c_str(), RTLD_NOLOAD | RTLD_NOW);
+		auto CreateInterface = reinterpret_cast<void*(*)(const char*, int*)>(dlsym(moduleHandle, "CreateInterface"));
+#endif
 		if(CreateInterface) {
 			auto queriedInterface = CreateInterface(interfaceName.c_str(), nullptr);
 			if(queriedInterface) { 
 				callback(reinterpret_cast<T>(queriedInterface));
 			}
 		}
+
 	}
 
 	const std::span<uint8_t> GetModuleSpan(std::string moduleName);

@@ -121,7 +121,17 @@ template<unsigned int Function, unsigned int Register, unsigned int Bit> inline 
 	static_assert(Register >= 0 && Register <= 4, "Invalid register");
 	static_assert(Bit >= 0 && Bit <= 32, "Invalid register");
 	int cpuInfo[4];
+#ifdef _WIN32
 	__cpuidex(cpuInfo, Function, 0);
+#else
+	asm volatile("cpuid"
+		: "=a" (cpuInfo[0]),
+		  "=b" (cpuInfo[1]),
+		  "=c" (cpuInfo[2]),
+		  "=d" (cpuInfo[3])
+		: "0" (Function), "2" (0)
+	);
+#endif
 	return cpuInfo[Register] & (1 << Bit);
 }
 

@@ -1,10 +1,14 @@
 #pragma once
 
-#define SUBHOOK_STATIC
 #include <subhook.h>
 #include <vector>
 #include "logger.hpp"
 #include "patch.hpp"
+
+#ifndef _WIN32
+#define __fastcall __attribute__((fastcall))
+#define __cdecl __attribute__((cdecl))
+#endif
 
 #define HOOK_THISCALL(type, name, ...) \
 	struct name { \

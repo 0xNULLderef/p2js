@@ -1,10 +1,12 @@
 #pragma once
 
 #include "singleton.hpp"
+#ifdef _WIN32
 #include <Windows.h>
 // whyyyy gdi
 #undef RegisterClass
 #undef ERROR
+#endif
 #include <cstdio>
 #include <cstdint>
 

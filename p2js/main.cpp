@@ -5,9 +5,19 @@
 #include <v8-initialization.h>
 #include <libplatform/libplatform.h>
 
+#ifndef _WIN32
+#include <unistd.h>
+#include <linux/limits.h>
+#endif
+
 void Main::Initialize() {
+#ifdef _WIN32
 	char exe[MAX_PATH];
 	GetModuleFileNameA(GetModuleHandleA(nullptr), exe, sizeof(exe));
+#else
+	char exe[PATH_MAX];
+	readlink("/proc/self/exe", exe, sizeof(exe));
+#endif
 	v8::V8::InitializeICUDefaultLocation(exe);
 	v8::V8::InitializeExternalStartupData(exe);
 	this->platform = v8::platform::NewDefaultPlatform();

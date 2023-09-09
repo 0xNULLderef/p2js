@@ -50,7 +50,7 @@ IScriptVM* Hooks::CreateVM::Callback(void* thisptr, void*, ScriptLanguage_t lang
 	if(language == SL_JAVASCRIPT) {
 		return ScriptCreateJavaScriptVM();
 	} else {
-		Original(thisptr, nullptr, language);
+		return Original(thisptr, nullptr, language);
 	}
 }
 
@@ -66,8 +66,13 @@ HSCRIPT Hooks::VScriptCompileScript::Callback(const char* scriptName, bool warnM
 	auto firstDotCharacter = strchr(scriptName, '.');
 	if(firstDotCharacter) {
 		auto firstDotCharacterIndex = firstDotCharacter - scriptName;
+#ifdef _WIN32
 		char buffer[MAX_PATH];
 		strncpy_s(buffer, scriptName, firstDotCharacterIndex);
+#else
+		char buffer[PATH_MAX];
+		strncpy(buffer, scriptName, firstDotCharacterIndex);
+#endif
 		buffer[firstDotCharacterIndex] = 0;
 		return Original(buffer, warnMissing);
 	} else {
