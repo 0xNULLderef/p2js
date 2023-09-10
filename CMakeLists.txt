@@ -30,8 +30,9 @@ set(SOURCES_P2JS
 	"p2js/memory.cpp"
 	"p2js/plugin.cpp"
 )
+set(DEBUG 1)
 
 add_library(p2js SHARED ${SOURCES_P2JS})
 set_target_properties(p2js PROPERTIES COMPILE_FLAGS "-m32 -march=native" LINK_FLAGS "-m32")
-target_link_libraries(p2js subhook v8_base v8_libbase wee8)
+target_link_libraries(p2js subhook v8_base v8_libbase wee8 atomic icui18n icuuc icudata)
 

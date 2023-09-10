@@ -11,9 +11,9 @@ Logger::Logger() {
 		this->ColorMsg = reinterpret_cast<ColorMsg_t>(GetProcAddress(tier0, "?ConColorMsg@@YAXABVColor@@PBDZZ"));
 	}
 #else
-	auto tier0 = dlopen("tier0.so", RTLD_NOLOAD | RTLD_NOW);
+	auto tier0 = dlopen("libtier0.so", RTLD_NOLOAD | RTLD_NOW);
 	if(tier0 != nullptr) {
-		this->ColorMsg = reinterpret_cast<ColorMsg_t>(dlsym(tier0, "?ConColorMsg@@YAXABVColor@@PBDZZ"));
+		this->ColorMsg = reinterpret_cast<ColorMsg_t>(dlsym(tier0, "_Z11ConColorMsgRK5ColorPKcz"));
 	}
 #endif
 

@@ -205,7 +205,7 @@ public:
 	virtual bool SetValue(HSCRIPT hScope, const char* pszKey, const ScriptVariant_t& value) = 0;
 	virtual bool SetValue(HSCRIPT hScope, const char* pszKey, const char* pszValue) = 0;
 	virtual void CreateTable(ScriptVariant_t& Table) = 0;
-	virtual int	GetNumTableEntries(HSCRIPT hScope) = 0;
+	virtual int GetNumTableEntries(HSCRIPT hScope) = 0;
 	virtual int GetKeyValue(HSCRIPT hScope, int nIterator, ScriptVariant_t* pKey, ScriptVariant_t* pValue) = 0;
 	virtual bool GetValue(HSCRIPT hScope, const char* pszKey, ScriptVariant_t* pValue) = 0;
 	virtual void ReleaseValue(ScriptVariant_t& value) = 0;

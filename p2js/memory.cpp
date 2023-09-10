@@ -8,6 +8,8 @@
 #ifndef _WIN32
 #include <link.h>
 #include <cstring>
+
+std::unordered_map<std::string, std::span<uint8_t>> Memory::moduleSpans;
 #endif
 
 template<size_t StartOffset, size_t EndOffset> inline bool MaskedCompare(std::span<uint8_t> block, std::vector<uint8_t> pattern, std::vector<uint8_t> mask) {
@@ -152,7 +154,12 @@ const std::span<uint8_t> Memory::GetModuleSpan(std::string moduleName) {
 	}
 	return { reinterpret_cast<uint8_t*>(moduleInfo.lpBaseOfDll), static_cast<size_t>(moduleInfo.SizeOfImage) };
 #else
-	return Memory::moduleSpans.find(moduleName)->second;
+	auto match = Memory::moduleSpans.find(moduleName);
+	if(match != Memory::moduleSpans.end()) {
+		return match->second;
+	} else {
+		throw std::runtime_error("Failed to find span");
+	}
 #endif
 }
 
@@ -200,13 +207,14 @@ Memory::Memory() {
 			if(afterFirstDot) {
 				for(size_t i = 0; i < info->dlpi_phnum; i++) {
 					if(info->dlpi_phdr[i].p_flags & 1) {
-						Memory::moduleSpans.insert({
-							std::string(name).substr(static_cast<size_t>(afterLastSlash - name) + 1, static_cast<size_t>(afterFirstDot - name) - 1),
-							{
+						auto pair = std::make_pair(
+							std::string(name).substr(static_cast<size_t>(afterLastSlash - name) + 1, static_cast<size_t>(afterFirstDot - afterLastSlash) - 1),
+							std::span {
 								reinterpret_cast<uint8_t*>(info->dlpi_addr + info->dlpi_phdr[i].p_vaddr),
 								info->dlpi_phdr[i].p_memsz
 							}
-						});
+						);
+						Memory::moduleSpans.insert(pair);
 						break;
 					}
 				}
